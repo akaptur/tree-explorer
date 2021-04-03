@@ -1,0 +1,15 @@
+{
+    "name": "vue-component-tree",
+    "version": "0.0.1",
+    "description": "A visual map of vue components' relationships",
+    "main": "experiment.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Zapgram/connections"
+    },
+    "author": "",
+    "license": "",
+    "dependencies": {
+        "@vue-sfc-parser": "^0.1.2",
+    }
+}
