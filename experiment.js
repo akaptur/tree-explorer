@@ -52,21 +52,32 @@ function readCode(fileName) {
 
 function findComponent(scriptAST) {
   // we always `export default` our Vue components so find that
-  // a more rigorous approach would look for Vue.extends specifically
   const exportNode = scriptAST.program.body.find(
     (node) => node.type === "ExportDefaultDeclaration"
   );
-  const vueArgs = exportNode.declaration.arguments[0];
+  let vueArgs;
+  if (exportNode.declaration.type === "ObjectExpression") {
+      // sometimes we export a bare object rather than "Vue.extends ..."
+      // in which case just grab it
+      vueArgs = exportNode.declaration;
+  } else {
+    vueArgs = exportNode.declaration.arguments[0];
+  }
   // At this point we want to parse the object that's passed as an argument to Vue.extends,
   // taking the form {name: "MyCoolComponent", components: {MyCoolSubComponent, MyOtherSubComponent}}
-  const vueCompName = vueArgs.properties.find(
+  // sadly not all components have names
+  const nameProp = vueArgs.properties.find(
     (property) => property.key.name == "name"
-  ).value.value;
-  const componentsUsed = vueArgs.properties
-    .find((property) => property.key.name == "components")
-    .value.properties.map((node) => node.value.name);
+  );
+  const name = nameProp ? nameProp.value.value : null;
+  const componentsProp = vueArgs.properties.find(
+    (property) => property.key.name == "components"
+  );
+  const componentsUsed = componentsProp
+    ? componentsProp.value.properties.map((node) => node.value.name)
+    : null;
   return {
-    name: vueCompName,
+    name: name,
     components: componentsUsed,
   };
 }
@@ -90,14 +101,33 @@ function parseFile(fileName) {
   const componentData = findComponent(scriptAST);
   return new VueComponent({
     name: componentData.name,
-    components: componentData.components.map((comp) =>
-      imports.find((each) => each.identifier === comp)
-    ),
+    components: componentData.components
+      ? componentData.components.map((comp) =>
+          imports.find((each) => each.identifier === comp)
+        )
+      : [],
     file: fileName,
   });
 }
 
-const rootDir = "/Users/akaptur/src/pilot/connections/";
-const vueFiles = walkRepo(rootDir);
-// const component = parseFile(fileName);
-// console.log(component);
+function parseAll() {
+    const rootDir = "/Users/akaptur/src/pilot/connections/";
+    const vueFiles = walkRepo(rootDir);
+    const allComponents = []; // todo useful data structure
+    vueFiles.forEach((fileName) => {
+      try {
+        allComponents.push(parseFile(fileName));
+      } catch (error) {
+        // for debugging: log the files with problems
+        console.log(fileName);
+        console.log(error);
+      }
+    });
+};
+
+parseAll();
+
+// interesting test cases
+// accordion (no components)
+// something has no name
+// ship-nav (no Vue.extends call)
