@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 
 const { parseComponent } = require("vue-sfc-parser");
 const babelParser = require("@babel/parser");
@@ -24,6 +25,25 @@ class VueComponent {
     // name of the component being imported but its location.
     this.file = args.file;
   }
+}
+
+function walkRepo(root) {
+  function storeOrTraverse(entry, vuePaths, dirPath) {
+    const filePath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      walkDir(filePath, vuePaths);
+    }
+    if (entry.isFile() && entry.name.endsWith(".vue")) {
+      vuePaths.push(filePath);
+    }
+  }
+  function walkDir(dirPath, vuePaths) {
+    const paths = fs.readdirSync(dirPath, { withFileTypes: true });
+    paths.forEach((filePath) => storeOrTraverse(filePath, vuePaths, dirPath));
+    return vuePaths;
+  }
+  const vuePaths = [];
+  return walkDir(root, vuePaths);
 }
 
 function readCode(fileName) {
@@ -77,7 +97,7 @@ function parseFile(fileName) {
   });
 }
 
-const fileName =
-  "/Users/akaptur/src/pilot/connections/client/views/admin/customer-chart-of-accounts-nav.vue";
-const component = parseFile(fileName);
-console.log(component);
+const rootDir = "/Users/akaptur/src/pilot/connections/";
+const vueFiles = walkRepo(rootDir);
+// const component = parseFile(fileName);
+// console.log(component);
