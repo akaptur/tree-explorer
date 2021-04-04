@@ -78,7 +78,7 @@ function findComponent(scriptAST) {
   }
   // At this point we want to parse the object that's passed as an argument to Vue.extends,
   // taking the form {name: "MyCoolComponent", components: {MyCoolSubComponent, MyOtherSubComponent}}
-  // sadly not all components have names
+  // although note that name or components (or both) may be missing
   const nameProp = vueArgs.properties.find(
     (property) => property.key.name == "name"
   );
@@ -104,15 +104,15 @@ function parseFile(fileName, fileContents) {
   const parsedImports = scriptAST.program.body.filter(
     (node) => node.type === "ImportDeclaration"
   );
-  const imports = parsedImports.filter(
-      (node) => node.specifiers.length
-  ).map(
-    (node) =>
-      new OneImport({
-        identifier: node.specifiers[0].local.name,
-        source: node.source.value,
-      })
-  );
+  const imports = parsedImports
+    .filter((node) => node.specifiers.length)
+    .map(
+      (node) =>
+        new OneImport({
+          identifier: node.specifiers[0].local.name,
+          source: node.source.value,
+        })
+    );
   const componentData = findComponent(scriptAST);
   return new VueComponent({
     name: componentData.name,
@@ -126,28 +126,29 @@ function parseFile(fileName, fileContents) {
 }
 
 function parseAll() {
-    const rootDir = "/Users/akaptur/src/pilot/connections/";
-    const vueFiles = walkRepo(rootDir);
-    const allComponents = []; // todo useful data structure
-    vueFiles.forEach((fileName) => {
-      try {
-        const fileContents = readCode(fileName);
-        allComponents.push(parseFile(fileName, fileContents));
-      } catch (error) {
-        // for debugging: log the files with problems
-        console.log(fileName);
-        console.log(error);
-      }
-    });
-};
-
-function parseOne(fileName) {
-    const fileContents = readCode(fileName);
-    return parseFile(fileName, fileContents);
+  // todo: home expansion / get the root a reasonable way
+  const rootDir = "/Users/akaptur/src/pilot/connections/";
+  const vueFiles = walkRepo(rootDir);
+  const allComponents = []; // todo useful data structure
+  vueFiles.forEach((fileName) => {
+    try {
+      const fileContents = readCode(fileName);
+      allComponents.push(parseFile(fileName, fileContents));
+    } catch (error) {
+      // for debugging: log the files with problems
+      console.log(fileName);
+      // console.log(error);
+    }
+  });
+  return allComponents;
 }
 
-// parseAll();
-console.log(parseOne("/Users/akaptur/src/pilot/connections/client/views/customer-onboarding/submit.vue"));
+function parseOne(fileName) {
+  const fileContents = readCode(fileName);
+  return parseFile(fileName, fileContents);
+}
+
+parseAll();
 
 // for the benefit of Jest
 // (why is this necessary?)
