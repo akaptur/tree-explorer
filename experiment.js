@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { parseComponent } = require("vue-sfc-parser");
+const vueParser = require("vue-sfc-parser");
 const babelParser = require("@babel/parser");
 
 // kind of in the spirit of a data class in python - just want to have a little record
@@ -82,9 +82,8 @@ function findComponent(scriptAST) {
   };
 }
 
-function parseFile(fileName) {
-  const fileContents = readCode(fileName);
-  const component = parseComponent(fileContents);
+function parseFile(fileName, fileContents) {
+  const component = vueParser.parseComponent(fileContents);
   const scriptAST = babelParser.parse(component.script.content, {
     sourceType: "module",
   });
@@ -116,7 +115,8 @@ function parseAll() {
     const allComponents = []; // todo useful data structure
     vueFiles.forEach((fileName) => {
       try {
-        allComponents.push(parseFile(fileName));
+        const fileContents = readCode(fileName);
+        allComponents.push(parseFile(fileName, fileContents));
       } catch (error) {
         // for debugging: log the files with problems
         console.log(fileName);
@@ -125,7 +125,13 @@ function parseAll() {
     });
 };
 
-parseAll();
+// parseAll();
+
+// for the benefit of Jest
+// (why is this necessary?)
+exports.parseFile = parseFile;
+exports.OneImport = OneImport;
+exports.VueComponent = VueComponent;
 
 // interesting test cases
 // accordion (no components)
