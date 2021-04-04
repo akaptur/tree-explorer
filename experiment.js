@@ -91,7 +91,9 @@ function parseFile(fileName, fileContents) {
   const parsedImports = scriptAST.program.body.filter(
     (node) => node.type === "ImportDeclaration"
   );
-  const imports = parsedImports.map(
+  const imports = parsedImports.filter(
+      (node) => node.specifiers.length
+  ).map(
     (node) =>
       new OneImport({
         identifier: node.specifiers[0].local.name,
