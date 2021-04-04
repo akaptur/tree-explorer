@@ -39,10 +39,10 @@ export default Vue.extend(
     {name: 'CoolStuff', components: {CoolSubStuff, JankySubStuff}, props: {}});`;
 
 const BASIC_COMPONENT = new m.VueComponent({
-    name: "CoolStuff",
-    components: COMPONENTS,
-    file: FILENAME,
-  });
+  name: "CoolStuff",
+  components: COMPONENTS,
+  file: FILENAME,
+});
 
 describe("Parse Vue components in all their various forms", () => {
   it("Can handle normal cases", () => {
@@ -64,9 +64,7 @@ describe("Parse Vue components in all their various forms", () => {
   });
 
   it("Allows empty/no components", () => {
-    const code = makeVue(
-      `export default Vue.extend({name: "Simple"});`
-    );
+    const code = makeVue(`export default Vue.extend({name: "Simple"});`);
     expect(m.parseFile(FILENAME, code)).toEqual(
       new m.VueComponent({
         name: "Simple",
@@ -83,13 +81,21 @@ describe("Parse Vue components in all their various forms", () => {
     expect(m.parseFile(FILENAME, code)).toEqual(BASIC_COMPONENT);
   });
 
-    it("Tolerates typescript", () => {
+  it("Tolerates typescript", () => {
     const code = makeTS();
     expect(m.parseFile(FILENAME, code)).toEqual(BASIC_COMPONENT);
   });
 
   it("Can handle a bare import", () => {
     const code = makeVue(`import "@testing-library/jest-dom"` + BASIC_VUE);
+    expect(m.parseFile(FILENAME, code)).toEqual(BASIC_COMPONENT);
+  });
+
+  it("Parses classes with properties", () => {
+    const code = makeVue(
+      `class Foo { prop; prop2; }
+          export default {name: "CoolStuff", components: {CoolSubStuff, JankySubStuff}, props: {}};`
+    );
     expect(m.parseFile(FILENAME, code)).toEqual(BASIC_COMPONENT);
   });
 

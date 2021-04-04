@@ -86,7 +86,7 @@ function parseFile(fileName, fileContents) {
   const component = vueParser.parseComponent(fileContents);
   const scriptAST = babelParser.parse(component.script.content, {
     sourceType: "module",
-    plugins: ["typescript"],
+    plugins: ["typescript", "classProperties"],
   });
   const parsedImports = scriptAST.program.body.filter(
     (node) => node.type === "ImportDeclaration"

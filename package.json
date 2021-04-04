@@ -11,9 +11,10 @@
     "license": "",
     "dependencies": {
         "@babel/parser": "^7.13.13",
+        "@babel/plugin-proposal-class-properties": "^7.13.0",
+        "@babel/preset-typescript": "^7.13.0",
         "babel-plugin-transform-typescript": "^7.0.0-alpha.19",
         "babel-preset-typescript-vue": "^1.1.1",
-        "@babel/preset-typescript": "^7.13.0",
         "vue-sfc-parser": "^0.1.2"
     },
     "devDependencies": {
