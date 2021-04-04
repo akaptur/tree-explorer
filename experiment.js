@@ -4,6 +4,9 @@ const path = require("path");
 const vueParser = require("vue-sfc-parser");
 const babelParser = require("@babel/parser");
 
+// todo: home expansion / get the root a reasonable way
+const ROOT_DIR = "/Users/akaptur/src/pilot/connections/";
+
 // kind of in the spirit of a data class in python - just want to have a little record
 // of the expected structure of these doodads
 class OneImport {
@@ -70,7 +73,6 @@ function findComponent(scriptAST) {
     );
     // todo: I think this only handles the case where the previous definition
     // uses Vue.extend, not the case where it's a bare object
-    debugger;
     vueArgs = component.declarations[0].init.arguments[0];
   } else {
     // export default Vue.extend({...})
@@ -126,13 +128,11 @@ function parseFile(fileName, fileContents) {
 }
 
 function parseAll() {
-  // todo: home expansion / get the root a reasonable way
-  const rootDir = "/Users/akaptur/src/pilot/connections/";
-  const vueFiles = walkRepo(rootDir);
-  const allComponents = []; // todo useful data structure
+  const vueFiles = walkRepo(ROOT_DIR);
+  const allComponents = [];
   vueFiles.forEach((fileName) => {
+    const fileContents = readCode(fileName);
     try {
-      const fileContents = readCode(fileName);
       allComponents.push(parseFile(fileName, fileContents));
     } catch (error) {
       // for debugging: log the files with problems
@@ -143,12 +143,55 @@ function parseAll() {
   return allComponents;
 }
 
+// Similar to VueComponent above, but populating the linked components with
+// an actual refernce to another node instead of an import
+class ComponentNode {
+  constructor(vueComp, relativePath) {
+    this.vueComp = vueComp;
+    this.relativePath = relativePath;
+    this.children = [];
+  }
+}
+
+function buildGraph(components, root) {
+  // lightly janky / bad layering: we want the file path
+  // only within the route. (Note this doesn't help with
+  // relative imports, sigh.)
+  const graph = new Map();
+  // first pass: build a map keyed off of relative path.
+  components.forEach((component) => {
+    // because imports can be aliased, it's the file that
+    // canonically identifies a component.
+    const usefulPath = path.relative(root, component.file);
+    graph.set(usefulPath, new ComponentNode(component, usefulPath));
+  });
+  // second pass: populate the children
+  graph.forEach((component, relativePath) => {
+    component.vueComp.components.forEach((child) => {
+      if (!child) {
+          // todo: documentation-pointers.vue parsing
+          console.log(component.vueComp.file);
+          return
+      }
+      const childNode = graph.get(child.source);
+      if (!childNode) {
+        // todo: relative imports :/
+        console.log(child.source, component.vueComp.file);
+        return;
+      }
+      component.children.push(childNode);
+    });
+  });
+  return graph;
+}
+
 function parseOne(fileName) {
   const fileContents = readCode(fileName);
   return parseFile(fileName, fileContents);
 }
 
-parseAll();
+const allComponents = parseAll();
+buildGraph(allComponents, ROOT_DIR);
 
 // for the benefit of Jest
 // (why is this necessary?)
