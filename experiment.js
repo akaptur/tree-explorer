@@ -86,6 +86,7 @@ function parseFile(fileName, fileContents) {
   const component = vueParser.parseComponent(fileContents);
   const scriptAST = babelParser.parse(component.script.content, {
     sourceType: "module",
+    plugins: ["typescript"],
   });
   const parsedImports = scriptAST.program.body.filter(
     (node) => node.type === "ImportDeclaration"
@@ -125,15 +126,16 @@ function parseAll() {
     });
 };
 
+function parseOne(fileName) {
+    const fileContents = readCode(fileName);
+    return parseFile(fileName, fileContents);
+}
+
 // parseAll();
+console.log(parseOne("/Users/akaptur/src/pilot/connections/client/views/customer-onboarding/submit.vue"));
 
 // for the benefit of Jest
 // (why is this necessary?)
 exports.parseFile = parseFile;
 exports.OneImport = OneImport;
 exports.VueComponent = VueComponent;
-
-// interesting test cases
-// accordion (no components)
-// something has no name
-// ship-nav (no Vue.extends call)

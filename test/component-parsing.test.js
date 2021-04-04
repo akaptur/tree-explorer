@@ -10,19 +10,37 @@ ${script}
 </script>`;
 }
 
-debugger;
+function makeTS() {
+  return `
+<template></template>
+<script lang="ts">
+import CoolSubStuff from 'cool/path.vue';
+import JankySubStuff from 'janky.vue';
+import TypeAnnotation from 'loveTypes';
+export default {
+    name: "CoolStuff",
+    components: {CoolSubStuff, JankySubStuff},
+    props: {
+        type: Object as TypeAnnotation,
+        required: true,
+    }
+};
+</script>`;
+}
+
 // matching the imports above
 const COMPONENTS = [
   new m.OneImport({ identifier: "CoolSubStuff", source: "cool/path.vue" }),
   new m.OneImport({ identifier: "JankySubStuff", source: "janky.vue" }),
 ];
 const FILENAME = "myfile.vue";
+const BASIC_VUE = `
+export default Vue.extend(
+    {name: 'CoolStuff', components: {CoolSubStuff, JankySubStuff}, props: {}});`;
 
 describe("Parse Vue components in all their various forms", () => {
   it("Can handle normal cases", () => {
-    const code = makeVue(
-      `export default Vue.extend({name: 'CoolStuff', components: {CoolSubStuff, JankySubStuff}, props: {}});`
-    );
+    const code = makeVue(BASIC_VUE);
     expect(m.parseFile(FILENAME, code)).toEqual(
       new m.VueComponent({
         name: "CoolStuff",
@@ -57,7 +75,7 @@ describe("Parse Vue components in all their various forms", () => {
   });
   it("Allows bare objects without Vue.extends", () => {
     const code = makeVue(
-      `export default {name: "CoolStuff", components: {CoolSubStuff, JankySubStuff}, props: {}});`
+      `export default {name: "CoolStuff", components: {CoolSubStuff, JankySubStuff}, props: {}};`
     );
     expect(m.parseFile(FILENAME, code)).toEqual(
       new m.VueComponent({
@@ -66,6 +84,17 @@ describe("Parse Vue components in all their various forms", () => {
         file: FILENAME,
       })
     );
-
   });
+
+    it("Tolerates typescript", () => {
+    const code = makeTS();
+    expect(m.parseFile(FILENAME, code)).toEqual(
+      new m.VueComponent({
+        name: "CoolStuff",
+        components: COMPONENTS,
+        file: FILENAME,
+      })
+    );
+  });
+
 });
