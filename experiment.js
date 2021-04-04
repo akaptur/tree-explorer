@@ -57,10 +57,23 @@ function findComponent(scriptAST) {
   );
   let vueArgs;
   if (exportNode.declaration.type === "ObjectExpression") {
-      // sometimes we export a bare object rather than "Vue.extends ..."
-      // in which case just grab it
-      vueArgs = exportNode.declaration;
+    // sometimes we skip "Vue.extends ..." and export an object
+    // `export default {name: "SomeComponent", components: {...}}
+    vueArgs = exportNode.declaration;
+  } else if (exportNode.declaration.type === "Identifier") {
+    // handle the form `export default SomeComponentDefinedEarlier`
+    // by walking the ast for the earlier definition
+    const component = scriptAST.program.body.find(
+      (node) =>
+        node.type === "VariableDeclaration" &&
+        node.declarations[0].id.name === exportNode.declaration.name
+    );
+    // todo: I think this only handles the case where the previous definition
+    // uses Vue.extend, not the case where it's a bare object
+    debugger;
+    vueArgs = component.declarations[0].init.arguments[0];
   } else {
+    // export default Vue.extend({...})
     vueArgs = exportNode.declaration.arguments[0];
   }
   // At this point we want to parse the object that's passed as an argument to Vue.extends,

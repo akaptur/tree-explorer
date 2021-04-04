@@ -94,9 +94,18 @@ describe("Parse Vue components in all their various forms", () => {
   it("Parses classes with properties", () => {
     const code = makeVue(
       `class Foo { prop; prop2; }
-          export default {name: "CoolStuff", components: {CoolSubStuff, JankySubStuff}, props: {}};`
+       export default Vue.extend({name: "CoolStuff", components: {CoolSubStuff, JankySubStuff}, props: {}});`
     );
     expect(m.parseFile(FILENAME, code)).toEqual(BASIC_COMPONENT);
   });
 
+  it("Allows objects that are named", () => {
+    const code = makeVue(
+      `const CoolStuff = Vue.extend(
+            {name: "CoolStuff", components: {CoolSubStuff, JankySubStuff}, props: {}}
+        )
+        export default CoolStuff`
+    );
+    expect(m.parseFile(FILENAME, code)).toEqual(BASIC_COMPONENT);
+  });
 });
