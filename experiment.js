@@ -154,9 +154,6 @@ class ComponentNode {
 }
 
 function buildGraph(components, root) {
-  // lightly janky / bad layering: we want the file path
-  // only within the route. (Note this doesn't help with
-  // relative imports, sigh.)
   const graph = new Map();
   // first pass: build a map keyed off of relative path.
   components.forEach((component) => {
@@ -169,9 +166,9 @@ function buildGraph(components, root) {
   graph.forEach((component, relativePath) => {
     component.vueComp.components.forEach((child) => {
       if (!child) {
-          // todo: documentation-pointers.vue parsing
-          console.log(component.vueComp.file);
-          return
+        // todo: documentation-pointers.vue parsing
+        console.log(component.vueComp.file);
+        return;
       }
       const childNode = graph.get(child.source);
       if (!childNode) {
@@ -182,8 +179,28 @@ function buildGraph(components, root) {
       component.children.push(childNode);
     });
   });
-  return graph;
+  // now smash it into a format vis.js likes
+  const serializedGraph = { nodes: [], links: [] };
+  graph.forEach((node) => {
+    serializedGraph.nodes.push({
+      id: node.relativePath,
+      label: node.vueComp.name,
+    });
+    node.children.forEach((child) => {
+      serializedGraph.links.push({
+        from: node.relativePath,
+        to: child.relativePath,
+      });
+    });
+  });
+  return serializedGraph;
 }
+
+function writeGraph(graph) {
+    const dumped = JSON.stringify(graph);
+    fs.writeFileSync("data.json", dumped);
+}
+
 
 function parseOne(fileName) {
   const fileContents = readCode(fileName);
@@ -191,7 +208,9 @@ function parseOne(fileName) {
 }
 
 const allComponents = parseAll();
-buildGraph(allComponents, ROOT_DIR);
+const graph = buildGraph(allComponents, ROOT_DIR);
+writeGraph(graph);
+
 
 // for the benefit of Jest
 // (why is this necessary?)
