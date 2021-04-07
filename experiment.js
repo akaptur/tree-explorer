@@ -150,6 +150,7 @@ class ComponentNode {
     this.vueComp = vueComp;
     this.relativePath = relativePath;
     this.children = [];
+    this.parents = [];
   }
 }
 
@@ -162,23 +163,29 @@ function buildGraph(components, root) {
     const usefulPath = path.relative(root, component.file);
     graph.set(usefulPath, new ComponentNode(component, usefulPath));
   });
-  // second pass: populate the children
+  // second pass: populate the parents
   graph.forEach((component, relativePath) => {
     component.vueComp.components.forEach((child) => {
       if (!child) {
         // todo: documentation-pointers.vue parsing
-        console.log(component.vueComp.file);
+        // console.log(component.vueComp.file);
         return;
       }
       const childNode = graph.get(child.source);
       if (!childNode) {
         // todo: relative imports :/
-        console.log(child.source, component.vueComp.file);
+        // console.log(child.source, component.vueComp.file);
         return;
       }
       component.children.push(childNode);
+      childNode.parents.push(component);
     });
   });
+  return graph;
+}
+
+function forVisJS(graph) {
+  // take the output of buildGraph
   // now smash it into a format vis.js likes
   const serializedGraph = { nodes: [], links: [] };
   graph.forEach((node) => {
@@ -196,11 +203,78 @@ function buildGraph(components, root) {
   return serializedGraph;
 }
 
-function writeGraph(graph) {
-    const dumped = JSON.stringify(graph);
-    fs.writeFileSync("data.json", dumped);
+function displayPaths(compName, graph) {
+  // naive iteration here, but probably dwarfed by the file I/O anyway
+  const matchingComps = Array.from(graph.values()).filter(
+    (component) => component.vueComp.name === compName
+  );
+  if (matchingComps.length > 1) {
+    console.log("More than one component found!");
+    matchingComps.forEach((fileName, component) => {
+      console.log(fileName);
+    });
+    return
+  }
+  if (matchingComps.length === 0) {
+    console.log("No component found");
+    return
+  }
+  const match = matchingComps[0];
+  // Now walk each tree and print the parents
+  const paths = buildPaths(match);
+  console.log(compName, "used in:");
+  paths.forEach((path) => {
+      console.log(path.map((comp) => comp.vueComp.name).join("->"));
+  })
 }
 
+function buildPaths(startNode) {
+  // given a dependency graph like
+  //         A     F
+  //       /  \  /
+  //      B    C
+  //     / \ /
+  //    E   D
+  //
+  // if asked for D, return all paths
+  // to the roots: DBA, DCA, and DCF.
+  const sentinel = "<sentinel-end>";
+  function logParent(soFar) {
+    const last = soFar[soFar.length - 1];
+    if (last.parents.length === 0) {
+        // root is reached
+        soFar.push(sentinel)
+        return [soFar];
+    }
+    const out = [];
+    last.parents.forEach((parent) => {
+      const nextStep = [...soFar];
+      nextStep.push(parent);
+      out.push(nextStep);
+    });
+    return out;
+  }
+  var paths = [[startNode]];
+  while (paths.some((path) => path[path.length -1] !== sentinel)) {
+      newPaths = [];
+      paths.forEach((path) => {
+        if (path[path.length - 1] !== sentinel) {
+          newPaths.push(...logParent(path));
+        } else {
+            newPaths.push(path);
+        }
+      })
+      paths = newPaths;
+  }
+  // pop off all the sentinels before returning
+  paths.forEach((path) => path.pop());
+  return paths;
+}
+
+function writeGraph(graph) {
+  const dumped = JSON.stringify(graph);
+  fs.writeFileSync("data.json", dumped);
+}
 
 function parseOne(fileName) {
   const fileContents = readCode(fileName);
@@ -209,8 +283,8 @@ function parseOne(fileName) {
 
 const allComponents = parseAll();
 const graph = buildGraph(allComponents, ROOT_DIR);
-writeGraph(graph);
-
+displayPaths("AccountPickerItem", graph);
+// writeGraph(graph);
 
 // for the benefit of Jest
 // (why is this necessary?)
