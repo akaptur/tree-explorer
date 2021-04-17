@@ -41,7 +41,7 @@ A search for "D" would return all paths back to the roots:
 D -> B -> A
 D -> C -> A
 D -> C -> F
-
+```
 
 ## Visualizations outside of the command line
 The included graph visualization is quite limited at the moment, and effectively unsupported. Contributions are welcome on this front.
