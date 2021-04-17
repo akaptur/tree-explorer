@@ -13,12 +13,44 @@ Tree explorer doesn't replace the Vue dev tools - it's intended to be used along
 - It covers the entire app, not just a single page that you happen to be looking at, so you can understand what other surfaces in your app might be affected by changes in a component.
 
 # Usage
+## Parsing and command line output
 Pass the path to the target codebase (that is, the one you're examining) as `--repo` and the name of the Vue component you're searching for as `--component`.
 Example:
 ```
 $ node tree-explorer.js --repo /path/to/target/repository --component MyComponentName
 ```
+Example output:
+```
+MyComponentName -> X -> Y -> Z
+MyComponentName -> X -> Y -> W
+MyComponentName -> V
+```
 
+This output displays one line per distinct path to a root component, where a root component is one not used by any other component. (In our app, root components are overwhelmingly used by the router.)
+
+The "distinct path" strategy produces verbose output and duplicates some information. For example, suppose we have the following dependency graph:
+```
+       A     F
+     /  \  /
+    B    C
+   / \ /
+  E   D
+```
+A search for "D" would return all paths back to the roots:
+```
+D -> B -> A
+D -> C -> A
+D -> C -> F
+
+
+## Visualizations outside of the command line
+The included graph visualization is quite limited at the moment, and effectively unsupported. Contributions are welcome on this front.
+
+
+## Limitations
+- There are a handful of known issues around parsing, including relative imports and imports of more than one thing from a component file.
+- The tool tracks only explicit relationships - if you use global Vue components directly in templates, the current version of tree-explorer won't capture that.
+- It's likely that you'll have to edit the arguments to babel parser's `parse` call - today, this is tuned to match the codebase I'm specifically targeting. Look in your babel.config.js file for hints.
 # FAQ
 ### Is this on npm?
 No, it's too rough of a draft at the moment, but you're welcome to clone the repo and try it out.

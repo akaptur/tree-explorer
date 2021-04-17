@@ -220,7 +220,6 @@ function displayPaths(compName, graph) {
   const match = matchingComps[0];
   // Now walk each tree and print the parents
   const paths = buildPaths(match);
-  console.log(compName, "used in:");
   paths.forEach((path) => {
       console.log(path.map((comp) => comp.vueComp.name).join("->"));
   })
