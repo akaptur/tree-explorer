@@ -273,7 +273,7 @@ function buildPaths(startNode) {
 
 function writeGraph(graph) {
   const dumped = JSON.stringify(graph);
-  fs.writeFileSync("data.json", dumped);
+  fs.writeFileSync("component_graph.json", dumped);
 }
 
 function parseOne(fileName) {
