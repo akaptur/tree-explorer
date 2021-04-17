@@ -13,8 +13,11 @@ Tree explorer doesn't replace the Vue dev tools - it's intended to be used along
 - It covers the entire app, not just a single page that you happen to be looking at, so you can understand what other surfaces in your app might be affected by changes in a component.
 
 # Usage
-TODO: document usage once the invocations are reasonables
-
+Pass the path to the target codebase (that is, the one you're examining) as `--repo` and the name of the Vue component you're searching for as `--component`.
+Example:
+```
+$ node tree-explorer.js --repo /path/to/target/repository --component MyComponentName
+```
 
 # FAQ
 ### Is this on npm?

@@ -1,11 +1,9 @@
 const fs = require("fs");
 const path = require("path");
+const yargs = require("yargs");
 
 const vueParser = require("vue-sfc-parser");
 const babelParser = require("@babel/parser");
-
-// todo: home expansion / get the root a reasonable way
-const ROOT_DIR = "/Users/akaptur/src/pilot/connections/";
 
 // kind of in the spirit of a data class in python - just want to have a little record
 // of the expected structure of these doodads
@@ -127,8 +125,8 @@ function parseFile(fileName, fileContents) {
   });
 }
 
-function parseAll() {
-  const vueFiles = walkRepo(ROOT_DIR);
+function parseAll(repo_dir) {
+  const vueFiles = walkRepo(repo_dir);
   const allComponents = [];
   vueFiles.forEach((fileName) => {
     const fileContents = readCode(fileName);
@@ -281,9 +279,17 @@ function parseOne(fileName) {
   return parseFile(fileName, fileContents);
 }
 
-const allComponents = parseAll();
-const graph = buildGraph(allComponents, ROOT_DIR);
-displayPaths("AccountPickerItem", graph);
+function main() {
+  args = yargs(process.argv).argv;
+  const allComponents = parseAll(args.repo);
+  const graph = buildGraph(allComponents, args.repo);
+  const searchTarget = args.component;
+  displayPaths(searchTarget, graph);
+}
+main();
+
+
+
 // writeGraph(graph);
 
 // for the benefit of Jest
