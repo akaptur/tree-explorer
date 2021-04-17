@@ -182,25 +182,6 @@ function buildGraph(components, root) {
   return graph;
 }
 
-function forVisJS(graph) {
-  // take the output of buildGraph
-  // now smash it into a format vis.js likes
-  const serializedGraph = { nodes: [], links: [] };
-  graph.forEach((node) => {
-    serializedGraph.nodes.push({
-      id: node.relativePath,
-      label: node.vueComp.name,
-    });
-    node.children.forEach((child) => {
-      serializedGraph.links.push({
-        from: node.relativePath,
-        to: child.relativePath,
-      });
-    });
-  });
-  return serializedGraph;
-}
-
 function displayPaths(compName, graph) {
   // naive iteration here, but probably dwarfed by the file I/O anyway
   const matchingComps = Array.from(graph.values()).filter(
@@ -268,11 +249,31 @@ function buildPaths(startNode) {
   return paths;
 }
 
+// experimental serialization for visualization
 function writeGraph(graph) {
-  const dumped = JSON.stringify(graph);
+    function forVisJS(graph) {
+        // take the output of buildGraph
+        // now smash it into a format vis.js likes
+        const serializedGraph = { nodes: [], links: [] };
+        graph.forEach((node) => {
+        serializedGraph.nodes.push({
+            id: node.relativePath,
+            label: node.vueComp.name,
+        });
+        node.children.forEach((child) => {
+            serializedGraph.links.push({
+            from: node.relativePath,
+            to: child.relativePath,
+            });
+        });
+        });
+        return serializedGraph;
+    }
+  const dumped = JSON.stringify(writeGraph(graph));
   fs.writeFileSync("component_graph.json", dumped);
 }
 
+// helper for debugging parsing problems
 function parseOne(fileName) {
   const fileContents = readCode(fileName);
   return parseFile(fileName, fileContents);
@@ -288,8 +289,6 @@ function main() {
 main();
 
 
-
-// writeGraph(graph);
 
 // for the benefit of Jest
 // (why is this necessary?)
