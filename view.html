@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <h1>Component explorer</h1>
+Read an arrow as "uses" - so an arrow from X to Y means that X uses Y
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,8 +10,8 @@
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style type="text/css">
         #mynetwork {
-            width: 600px;
-            height: 400px;
+            width: 680px;
+            height: 600px;
             border: 1px solid lightgray;
         }
     </style>
@@ -25,7 +26,7 @@
             xmlHttp.send(null);
             return xmlHttp.responseText;
         }
-        graph = JSON.parse(httpGet("data.json"));
+        graph = JSON.parse(httpGet("component_graph.json"));
         var nodes = new vis.DataSet(graph.nodes);
 
         // create an array with edges
@@ -37,7 +38,7 @@
             nodes: nodes,
             edges: edges,
         };
-        var options = {layout: {improvedLayout: false}};
+        var options = {layout: {improvedLayout: true}, edges: {arrows: "to"}};
         var network = new vis.Network(container, data, options);
     </script>
 </body>

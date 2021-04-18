@@ -184,7 +184,8 @@ function buildGraph(components, root) {
     return graph;
 }
 
-function displayPaths(compName, graph) {
+// Grab the node with a name that matches the given name
+function findNode(compName, graph) {
     // naive iteration here, but probably dwarfed by the file I/O anyway
     const matchingComps = Array.from(graph.values()).filter(
         (component) => component.vueComp.name === compName
@@ -200,12 +201,37 @@ function displayPaths(compName, graph) {
         console.log("No component found");
         return;
     }
-    const match = matchingComps[0];
-    // Now walk each tree and print the parents
-    const paths = buildPaths(match);
-    paths.forEach((path) => {
-        console.log(path.map((comp) => comp.vueComp.name).join("->"));
-    });
+    return matchingComps[0];
+}
+
+// basic output: command line version
+function displayPaths(compName, graph) {
+    const match = findNode(compName, graph);
+    if (match !== null) {
+        // Now walk each tree and print the parents
+        const paths = buildPaths(match);
+        paths.forEach((path) => {
+            console.log(path.map((comp) => comp.vueComp.name).join("->"));
+        });
+    }
+}
+
+// output a filtered version of the graph, excluding nodes not connected to
+// the searched-for node
+function filterGraph(compName, graph) {
+    const match = findNode(compName, graph);
+    const filteredGraph = new Map();
+    if (match !== null) {
+        // this is a weird way to do this - the right move is just
+        // to find all the nodes that are reachable from this one
+        // but since I already have this code I'm reusing it for now
+        const paths = buildPaths(match);
+        // paths has lots of duplicate notes, so de-dupe
+        paths.forEach((path) =>
+            path.map((comp) => filteredGraph.set(comp.relativePath, comp))
+        );
+    }
+    return filteredGraph;
 }
 
 function buildPaths(startNode) {
@@ -271,7 +297,7 @@ function writeGraph(graph) {
         });
         return serializedGraph;
     }
-    const dumped = JSON.stringify(writeGraph(graph));
+    const dumped = JSON.stringify(forVisJS(graph));
     fs.writeFileSync("component_graph.json", dumped);
 }
 
@@ -287,6 +313,7 @@ function main() {
     const graph = buildGraph(allComponents, args.repo);
     const searchTarget = args.component;
     displayPaths(searchTarget, graph);
+    writeGraph(filterGraph(searchTarget, graph));
 }
 main();
 
