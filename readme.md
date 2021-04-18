@@ -43,9 +43,14 @@ D -> C -> A
 D -> C -> F
 ```
 
-## Visualizations outside of the command line
-The included graph visualization is quite limited at the moment, and effectively unsupported. Contributions are welcome on this front.
+## Visualization
+In addition to command-line output, running the command above outputs a file called `component_graph.json`. `view.html` can read this file and display it with vis.js. To see inspect it, fire up the server of your choice:
+```
+$ python -m SimpleHTTPServer  # or any other server
+```
+and then open the file in the browser (e.g. http://localhost:8000/view.html)
 
+This visualization shows the entire filtered graph of nodes, which can be messy for components with many callers. I'm planning to experiment with more usable visualizations.
 
 ## Limitations
 - There are a handful of known issues around parsing, including relative imports and imports of more than one thing from a component file.
